@@ -1,2 +1,2 @@
 # Cornerbox
-Comic book corner box creator app
+CornerBox — static generator for comic corner boxes
