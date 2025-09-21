@@ -1,5 +1,3 @@
-### 2) `styles.css`
-```css
 :root {
   --bg: #0b0b0b;
   --panel: #151515;
@@ -23,4 +21,3 @@ button:hover { filter: brightness(1.05); }
 canvas { width: min(100%, 640px); height: auto; background: #fff; border-radius: 12px; border: 1px solid #ddd; }
 .hint { margin: 8px 0 0; font-size: 12px; opacity: 0.75; }
 @media (max-width: 880px){ .app { grid-template-columns: 1fr; } }
-```
