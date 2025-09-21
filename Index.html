@@ -1,0 +1,74 @@
+### 1) `index.html`
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CornerBox Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="controls">
+        <h1>CornerBox</h1>
+        <label>
+          Title
+          <input id="title" type="text" placeholder="THE ASTONISHING..." value="THE ASTONISHING" />
+        </label>
+        <div class="row">
+          <label>
+            Issue #
+            <input id="issue" type="number" min="1" value="1" />
+          </label>
+          <label>
+            Price
+            <input id="price" type="text" value="12¢" />
+          </label>
+        </div>
+        <label>
+          Publisher (small text)
+          <input id="publisher" type="text" placeholder="MARVEL COMICS GROUP" value="MARVEL COMICS GROUP" />
+        </label>
+        <label>
+          Character Head (PNG/JPG)
+          <input id="head" type="file" accept="image/*" />
+        </label>
+        <div class="row">
+          <label>
+            Style
+            <select id="style">
+              <option value="classic">Classic</option>
+              <option value="slanted">Slanted</option>
+              <option value="circle">Circle Emblem</option>
+            </select>
+          </label>
+          <label>
+            Outline
+            <input id="outline" type="range" min="2" max="12" step="1" value="6" />
+          </label>
+        </div>
+        <div class="row">
+          <label>BG Color <input id="bg" type="color" value="#ffffff" /></label>
+          <label>Accent <input id="accent" type="color" value="#ffeb3b" /></label>
+          <label>Text <input id="textColor" type="color" value="#000000" /></label>
+        </div>
+        <div class="buttons">
+          <button id="randomize">Randomize Colors</button>
+          <button id="download">Download PNG</button>
+        </div>
+      </section>
+
+      <section class="stage">
+        <canvas id="canvas" width="512" height="512" aria-label="Preview"></canvas>
+        <p class="hint">512×512 export. All on your device — no uploads.</p>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+```
