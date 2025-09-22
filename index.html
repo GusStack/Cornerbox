@@ -13,10 +13,12 @@
     <main class="app">
       <section class="controls">
         <h1>CornerBox</h1>
+
         <label>
           Title
           <input id="title" type="text" placeholder="THE ASTONISHING..." value="THE ASTONISHING" />
         </label>
+
         <div class="row">
           <label>
             Issue #
@@ -27,19 +29,22 @@
             <input id="price" type="text" value="12¢" />
           </label>
         </div>
+
         <label>
           Publisher (small text)
           <input id="publisher" type="text" placeholder="MARVEL COMICS GROUP" value="MARVEL COMICS GROUP" />
         </label>
+
         <label>
           Character Head (PNG/JPG)
           <input id="head" type="file" accept="image/*" />
         </label>
+
         <div class="row">
           <label>
             Style
             <select id="style">
-              <option value="classic">Classic</option>
+              <option value="classic" selected>Classic</option>
               <option value="slanted">Slanted</option>
               <option value="circle">Circle Emblem</option>
             </select>
@@ -49,11 +54,13 @@
             <input id="outline" type="range" min="2" max="12" step="1" value="6" />
           </label>
         </div>
+
         <div class="row">
           <label>BG Color <input id="bg" type="color" value="#ffffff" /></label>
           <label>Accent <input id="accent" type="color" value="#ffeb3b" /></label>
           <label>Text <input id="textColor" type="color" value="#000000" /></label>
         </div>
+
         <div class="buttons">
           <button id="randomize">Randomize Colors</button>
           <button id="download">Download PNG</button>
@@ -61,11 +68,15 @@
       </section>
 
       <section class="stage">
-        <canvas id="canvas" width="512" height="512" aria-label="Preview"></canvas>
-        <p class="hint">512×512 export. All on your device — no uploads.</p>
+        <!-- Sized via CSS (styles.css) with aspect-ratio to keep it square -->
+        <canvas id="canvas" aria-label="Preview"></canvas>
+
+        <!-- Hint auto-updates via JS by setting data-size; CSS shows it with ::after -->
+        <p class="hint" id="hint" data-size="512×512">All on your device — no uploads.</p>
       </section>
     </main>
 
-    <script src="script.js"></script>
+    <!-- Defer so DOM is ready before script runs -->
+    <script src="script.js" defer></script>
   </body>
 </html>
