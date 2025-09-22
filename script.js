@@ -6,22 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return Number.isFinite(n) ? n : fallback;
   };
 
-  // --- Canvas + DPI-safe sizing (1 canvas unit = 1 CSS pixel) ---
+  // --- Canvas + DPR-safe sizing (1 canvas unit = 1 CSS px) ---
   const canvas = el('canvas');
   if (!canvas) { console.error('No <canvas id="canvas">'); return; }
   const ctx = canvas.getContext('2d');
+  const hint = el('hint');
 
   function sizeCanvasToDisplay() {
     const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const rect = canvas.getBoundingClientRect();       // CSS pixels
+    const rect = canvas.getBoundingClientRect(); // CSS px
     const wDev = Math.max(1, Math.floor(rect.width * dpr));
     const hDev = Math.max(1, Math.floor(rect.height * dpr));
     if (canvas.width !== wDev || canvas.height !== hDev) {
       canvas.width = wDev;
       canvas.height = hDev;
     }
-    // Make 1 unit == 1 CSS pixel:
+    // Make 1 canvas unit = 1 CSS pixel
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Update hint text
+    if (hint) hint.setAttribute('data-size', `${Math.round(rect.width)}×${Math.round(rect.height)}`);
   }
   sizeCanvasToDisplay();
   window.addEventListener('resize', () => { sizeCanvasToDisplay(); render(); });
@@ -31,12 +35,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     title:      getInput('title', ''),
     issue:      toNum(getInput('issue'), 1),
-    price:      getInput('price', '50p'),
+    price:      getInput('price', '12¢'),
     publisher:  getInput('publisher', ''),
     style:      getInput('style', 'classic'),
-    outline:    toNum(getInput('outline'), 4),
+    outline:    toNum(getInput('outline'), 6),
     bg:         getInput('bg', '#ffffff'),
-    accent:     getInput('accent', '#f5c518'),
+    accent:     getInput('accent', '#ffeb3b'),
     textColor:  getInput('textColor', '#000000'),
     headImg:    null,
   };
@@ -57,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try { if (document.fonts?.ready) await document.fonts.ready; } catch(_) {}
     sizeCanvasToDisplay();
 
-    // Use CSS-pixel size for all drawing
     const rect = canvas.getBoundingClientRect();
     const W = rect.width;
     const H = rect.height;
@@ -93,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ctx.fillRect(24, 24, Math.max(0, W-48), 96);
     }
 
-    // Outer outline (guard NaN)
+    // Outer outline
     ctx.lineWidth = clamp(Number(state.outline) || 0, 0, 20);
     ctx.strokeStyle = '#000';
     drawRoundRect(8,8,W-16,H-16,18);
@@ -186,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!node) return;
     node.addEventListener('input', ()=>{
       if (id === 'issue' || id === 'outline') {
-        state[id] = toNum(node.value, id === 'issue' ? 1 : 4);
+        state[id] = toNum(node.value, id === 'issue' ? 1 : 6);
       } else {
         state[id] = node.value;
       }
@@ -194,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Support id="head" or "headInput"
-  const headInput = el('headInput') || el('head');
+  // Head image upload
+  const headInput = el('head');
   if (headInput) {
     headInput.addEventListener('change', async (e)=>{
       const file = e.target.files && e.target.files[0];
@@ -223,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   });
 
-  // Download PNG (works on mobile; falls back to dataURL)
+  // Download PNG
   el('download')?.addEventListener('click', () => {
     const alertOnce = (msg) => { try { alert(msg); } catch (_) {} };
 
@@ -233,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const a = document.createElement('a');
         a.href = href;
         a.download = `cornerbox-issue-${state.issue}.png`;
-        a.target = '_blank';  // mobile: open new tab if "download" ignored
+        a.target = '_blank';
         a.rel = 'noopener';
         document.body.appendChild(a);
         a.click();
@@ -265,6 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // First paint
+  // First render
   render();
 });
