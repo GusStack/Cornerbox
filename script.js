@@ -1,56 +1,47 @@
 /* CornerBox Generator — no deps, client-only */
 document.addEventListener('DOMContentLoaded', () => {
   const el = (id) => document.getElementById(id);
-  const getInput = (id) => {
-    const n = el(id);
-    return n ? n.value : '';
-  };
-
-  // --- Canvas + DPI-safe sizing ---
-  const canvas = el('canvas');
-  if (!canvas) {
-    console.error('No <canvas id="canvas"> found.');
-    return;
-  }
-  const ctx = canvas.getContext('2d');
-
-  function sizeCanvasToDisplay() {
-    const dpr = Math.max(1, window.devicePixelRatio || 1);
-    const rect = canvas.getBoundingClientRect();
-    const w = Math.max(1, Math.floor(rect.width * dpr));
-    const h = Math.max(1, Math.floor(rect.height * dpr));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // ensure 1 CSS px = 1 unit
-    }
-  }
-  sizeCanvasToDisplay();
-  window.addEventListener('resize', () => {
-    sizeCanvasToDisplay();
-    render();
-  });
-
   const toNum = (v, fallback = 0) => {
     const n = Number(v);
     return Number.isFinite(n) ? n : fallback;
   };
 
+  // --- Canvas + DPI-safe sizing (1 canvas unit = 1 CSS pixel) ---
+  const canvas = el('canvas');
+  if (!canvas) { console.error('No <canvas id="canvas">'); return; }
+  const ctx = canvas.getContext('2d');
+
+  function sizeCanvasToDisplay() {
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = canvas.getBoundingClientRect();       // CSS pixels
+    const wDev = Math.max(1, Math.floor(rect.width * dpr));
+    const hDev = Math.max(1, Math.floor(rect.height * dpr));
+    if (canvas.width !== wDev || canvas.height !== hDev) {
+      canvas.width = wDev;
+      canvas.height = hDev;
+    }
+    // Make 1 unit == 1 CSS pixel:
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  sizeCanvasToDisplay();
+  window.addEventListener('resize', () => { sizeCanvasToDisplay(); render(); });
+
+  const getInput = (id, fallback = '') => (el(id)?.value ?? fallback);
+
   const state = {
-    title: getInput('title'),
-    issue: toNum(getInput('issue'), 1),
-    price: getInput('price') || '£3.99',
-    publisher: getInput('publisher') || '',
-    style: getInput('style') || 'classic',
-    outline: toNum(getInput('outline'), 4),
-    bg: getInput('bg') || '#ffffff',
-    accent: getInput('accent') || '#f5c518',
-    textColor: getInput('textColor') || '#000000',
-    headImg: null,
+    title:      getInput('title', ''),
+    issue:      toNum(getInput('issue'), 1),
+    price:      getInput('price', '50p'),
+    publisher:  getInput('publisher', ''),
+    style:      getInput('style', 'classic'),
+    outline:    toNum(getInput('outline'), 4),
+    bg:         getInput('bg', '#ffffff'),
+    accent:     getInput('accent', '#f5c518'),
+    textColor:  getInput('textColor', '#000000'),
+    headImg:    null,
   };
 
   function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
   function drawRoundRect(x,y,w,h,r){
     const rr = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -64,13 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function render(){
     try { if (document.fonts?.ready) await document.fonts.ready; } catch(_) {}
-    sizeCanvasToDisplay(); // re-affirm size in case CSS changed
+    sizeCanvasToDisplay();
 
-    const W = canvas.width;
-    const H = canvas.height;
+    // Use CSS-pixel size for all drawing
+    const rect = canvas.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
     ctx.clearRect(0,0,W,H);
 
-    // Background
+    // Background card
     ctx.fillStyle = state.bg;
     drawRoundRect(8,8,W-16,H-16,18);
     ctx.fill();
@@ -108,8 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Title
     const title = String(state.title || '').toUpperCase();
     const maxW = Math.max(0, W - 48);
-    let size = 64;
-    const minSize = 28;
+    let size = 64, minSize = 28;
     ctx.fillStyle = state.textColor;
     ctx.textBaseline = 'top';
     ctx.font = `${size}px Bangers, sans-serif`;
@@ -119,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleY = state.style === 'classic' ? 36 : 40;
     ctx.fillText(title, 32, titleY);
 
-    // Publisher
+    // Publisher small text
     ctx.font = '12px Inter, sans-serif';
     ctx.globalAlpha = 0.9;
     ctx.fillText(state.publisher || '', 32, 24 + 96 + 8);
@@ -187,10 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
     return '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
   }
 
-  // --- Wire up controls safely ---
+  // --- Wire up controls ---
   ;['title','issue','price','publisher','style','outline','bg','accent','textColor'].forEach(id=>{
     const node = el(id);
-    if (!node) return; // skip missing controls
+    if (!node) return;
     node.addEventListener('input', ()=>{
       if (id === 'issue' || id === 'outline') {
         state[id] = toNum(node.value, id === 'issue' ? 1 : 4);
@@ -201,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Support either id="headInput" or id="head"
+  // Support id="head" or "headInput"
   const headInput = el('headInput') || el('head');
   if (headInput) {
     headInput.addEventListener('change', async (e)=>{
@@ -218,73 +211,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const randomizeBtn = el('randomize');
-  if (randomizeBtn) {
-    randomizeBtn.addEventListener('click', ()=>{
-      const bg = randomHex();
-      const ac = randomHex();
-      const tc = '#000000';
-      const bgInput = el('bg'), acInput = el('accent'), tcInput = el('textColor');
-      if (bgInput) bgInput.value = bg;
-      if (acInput) acInput.value = ac;
-      if (tcInput) tcInput.value = tc;
-      state.bg = bg;
-      state.accent = ac;
-      state.textColor = tc;
-      render();
-    });
-  }
+  // Randomize colors
+  el('randomize')?.addEventListener('click', ()=>{
+    const bg = randomHex();
+    const ac = randomHex();
+    const tc = '#000000';
+    if (el('bg')) el('bg').value = bg;
+    if (el('accent')) el('accent').value = ac;
+    if (el('textColor')) el('textColor').value = tc;
+    state.bg = bg; state.accent = ac; state.textColor = tc;
+    render();
+  });
 
-  const downloadBtn = el('download');
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      const alertOnce = (msg) => { try { alert(msg); } catch (_) {} };
+  // Download PNG (works on mobile; falls back to dataURL)
+  el('download')?.addEventListener('click', () => {
+    const alertOnce = (msg) => { try { alert(msg); } catch (_) {} };
 
-      const doDataURLFallback = () => {
-        try {
-          const href = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = href;
-          a.download = `cornerbox-issue-${state.issue}.png`;
-          a.target = '_blank'; // iOS often ignores download: open new tab
-          a.rel = 'noopener';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          alertOnce("Opened image in a new tab. Use your browser's Share/Save to keep it.");
-        } catch (e) {
-          alertOnce('Export failed: ' + e.message);
-          console.error(e);
-        }
-      };
-
+    const doDataURLFallback = () => {
       try {
-        if (!('toBlob' in HTMLCanvasElement.prototype)) {
-          console.warn('toBlob not supported; using dataURL fallback');
-          return doDataURLFallback();
-        }
-        canvas.toBlob((blob) => {
-          if (!blob) {
-            alertOnce('Could not create image from canvas (toBlob returned null). Falling back…');
-            return doDataURLFallback();
-          }
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `cornerbox-issue-${state.issue}.png`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }, 'image/png');
+        const href = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = `cornerbox-issue-${state.issue}.png`;
+        a.target = '_blank';  // mobile: open new tab if "download" ignored
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        alertOnce("Opened image in a new tab. Use your browser's Share/Save to keep it.");
       } catch (e) {
-        console.warn('toBlob threw; falling back to dataURL', e);
-        alertOnce('Download failed; trying alternate method…');
-        doDataURLFallback();
+        alertOnce('Export failed: ' + e.message);
+        console.error(e);
       }
-    });
-  }
+    };
 
-  // Initial render
+    try {
+      if (!('toBlob' in HTMLCanvasElement.prototype)) return doDataURLFallback();
+      canvas.toBlob((blob) => {
+        if (!blob) return doDataURLFallback();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cornerbox-issue-${state.issue}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
+    } catch (e) {
+      console.warn('toBlob threw; using dataURL fallback', e);
+      alertOnce('Download failed; trying alternate method…');
+      doDataURLFallback();
+    }
+  });
+
+  // First paint
   render();
 });
