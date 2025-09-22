@@ -429,4 +429,3 @@ el('download').addEventListener('click', ()=>{
 });
 
 render();
-```
